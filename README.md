@@ -76,13 +76,9 @@ The system uses a simple 10-second calibration routine for each individual pump:
 ---
 
 ## ☕ Support / Podpora
-Pokud se vám projekt líbí a ušetřil vám čas nebo peníze za drahý komerční dávkovač, můžete mě podpořit a pozvat mě na virtuální kafe!
+Pokud se vám projekt líbí a ušetřil vám čas nebo peníze za drahý komerční dávkovač, můžete mě podpořit přes Buy Me a Coffee nebo PayPal!
 
-If you like this project and it saved you time or money, consider supporting me!
+If you like this project and it saved you time or money, consider supporting my work!
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/honza192)
-
----
-
-## 📜 License
-Tento projekt je šířen pod licencí **MIT**. Můžete jej volně upravovat, stavět a šířit.
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=V2MTQCG9UFBUS&no_recurring=1&currency_code=CZK)
