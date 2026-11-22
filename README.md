@@ -49,3 +49,6 @@ Soubory najdete ve složce `/3d_models`:
 
 ## 📜 License
 Tento projekt je šířen pod licencí **MIT**. Můžete jej volně upravovat a stavět.
+
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/honza192
