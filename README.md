@@ -9,7 +9,7 @@ A complete open-source 4-channel dosing station for aquariums and hydroponics po
 ## ✨ Features / Vlastnosti
 - **4× Peristaltické čerpadlo INTLLAB** (12V) s plynulým dávkováním.
 - **ESP32 s Expansion Boardem** (snadné zapojení bez pájení na šroubovací svorky).
-- **0.96" OLED displej (I2C)** umístěný na čelním panelu pro snadnou čitelnost zespodu z police.
+- **0.96" OLED displej (I2C)** umístěný na čelním panelu.
 - **Držák hadiček na sklo 15 mm** s úhlem 20° (hadičky se nelámou) a zacvakávacím profilem (drop-in).
 - **Plná integrace do Home Assistantu** přes ESPHome (nastavení časů, dávek, kalibrace i ruční sepnutí).
 - Plně parametrické 3D modely vytvořené v **OpenSCAD**.
