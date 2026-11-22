@@ -1,0 +1,415 @@
+# Board: Generic ESP32 Board (Generic)
+# Definition: definitions/boards/generic-esp32/manifest.yaml
+
+esphome:
+  name: akva-hnojeni
+  friendly_name: "Akva Hnojení"
+  on_shutdown:
+    then:
+      - switch.turn_off: pump1_relay
+      - switch.turn_off: pump2_relay
+      - switch.turn_off: pump3_relay
+      - switch.turn_off: pump4_relay
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+
+api:
+  encryption:
+    key: "your_key"
+
+ota:
+  - platform: esphome
+
+wifi:
+  id: wifi_comp
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: Akva-Hnojeni-Fallback
+    password: tvoje_heslo
+captive_portal:
+
+#web_server:
+ # port: 80
+  #auth:
+   # type: basic
+    #password: kraken192
+    #username: kraken
+  #version: 3
+  
+
+# --- ČAS Z HOME ASSISTANT ---
+time:
+  - platform: homeassistant
+    id: ha_time
+    on_time:
+      # Kontroluje se každou minutu v 00 sekund
+      - seconds: 0
+        minutes: '*'
+        hours: '*'
+        then:
+          - lambda: |-
+              auto now = id(ha_time).now();
+              if (!now.is_valid()) return;
+
+              if (id(pump1_auto).state && id(pump1_time).has_state() && id(pump1_dose).state > 0) {
+                if (now.hour == id(pump1_time).hour && now.minute == id(pump1_time).minute) {
+                  id(dose_pump_1).execute();
+                }
+              }
+              if (id(pump2_auto).state && id(pump2_time).has_state() && id(pump2_dose).state > 0) {
+                if (now.hour == id(pump2_time).hour && now.minute == id(pump2_time).minute) {
+                  id(dose_pump_2).execute();
+                }
+              }
+              if (id(pump3_auto).state && id(pump3_time).has_state() && id(pump3_dose).state > 0) {
+                if (now.hour == id(pump3_time).hour && now.minute == id(pump3_time).minute) {
+                  id(dose_pump_3).execute();
+                }
+              }
+              if (id(pump4_auto).state && id(pump4_time).has_state() && id(pump4_dose).state > 0) {
+                if (now.hour == id(pump4_time).hour && now.minute == id(pump4_time).minute) {
+                  id(dose_pump_4).execute();
+                }
+              }
+
+# --- I2C A OLED DISPLEJ ---
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_small
+    size: 10
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    address: 0x3C
+    update_interval: 1s
+    lambda: |-
+      auto now = id(ha_time).now();
+      if (now.is_valid()) {
+        it.strftime(0, 0, id(font_small), "%H:%M:%S", now);
+      } else {
+        it.print(0, 0, id(font_small), "Cekam na cas...");
+      }
+
+      if (id(wifi_comp).is_connected()) {
+        it.print(85, 0, id(font_small), "WiFi:OK");
+      } else {
+        it.print(85, 0, id(font_small), "WiFi:--");
+      }
+
+      it.line(0, 12, 127, 12);
+
+      // Čerpadlo 1
+      if (id(pump1_relay).state) {
+        it.printf(0, 14, id(font_small), "1: DAVKUJE! (%.1fml)", id(pump1_dose).state);
+      } else {
+        it.printf(0, 14, id(font_small), "1: %02d:%02d %4.1fml [%s]",
+          id(pump1_time).hour, id(pump1_time).minute, id(pump1_dose).state,
+          id(pump1_auto).state ? "ON" : "OFF");
+      }
+
+      // Čerpadlo 2
+      if (id(pump2_relay).state) {
+        it.printf(0, 26, id(font_small), "2: DAVKUJE! (%.1fml)", id(pump2_dose).state);
+      } else {
+        it.printf(0, 26, id(font_small), "2: %02d:%02d %4.1fml [%s]",
+          id(pump2_time).hour, id(pump2_time).minute, id(pump2_dose).state,
+          id(pump2_auto).state ? "ON" : "OFF");
+      }
+
+      // Čerpadlo 3
+      if (id(pump3_relay).state) {
+        it.printf(0, 38, id(font_small), "3: DAVKUJE! (%.1fml)", id(pump3_dose).state);
+      } else {
+        it.printf(0, 38, id(font_small), "3: %02d:%02d %4.1fml [%s]",
+          id(pump3_time).hour, id(pump3_time).minute, id(pump3_dose).state,
+          id(pump3_auto).state ? "ON" : "OFF");
+      }
+
+      // Čerpadlo 4
+      if (id(pump4_relay).state) {
+        it.printf(0, 50, id(font_small), "4: DAVKUJE! (%.1fml)", id(pump4_dose).state);
+      } else {
+        it.printf(0, 50, id(font_small), "4: %02d:%02d %4.1fml [%s]",
+          id(pump4_time).hour, id(pump4_time).minute, id(pump4_dose).state,
+          id(pump4_auto).state ? "ON" : "OFF");
+      }
+
+# --- SKRIPTY PRO DÁVKOVÁNÍ ---
+script:
+  - id: dose_pump_1
+    mode: single
+    then:
+      - switch.turn_on: pump1_relay
+      - delay: !lambda "return (uint32_t)((id(pump1_dose).state / std::max(0.1f, id(pump1_calib).state)) * 10000.0f);"
+      - switch.turn_off: pump1_relay
+
+  - id: dose_pump_2
+    mode: single
+    then:
+      - switch.turn_on: pump2_relay
+      - delay: !lambda "return (uint32_t)((id(pump2_dose).state / std::max(0.1f, id(pump2_calib).state)) * 10000.0f);"
+      - switch.turn_off: pump2_relay
+
+  - id: dose_pump_3
+    mode: single
+    then:
+      - switch.turn_on: pump3_relay
+      - delay: !lambda "return (uint32_t)((id(pump3_dose).state / std::max(0.1f, id(pump3_calib).state)) * 10000.0f);"
+      - switch.turn_off: pump3_relay
+
+  - id: dose_pump_4
+    mode: single
+    then:
+      - switch.turn_on: pump4_relay
+      - delay: !lambda "return (uint32_t)((id(pump4_dose).state / std::max(0.1f, id(pump4_calib).state)) * 10000.0f);"
+      - switch.turn_off: pump4_relay
+
+# --- VÝSTUPY NA MOSFETY + AUTOMATIKA ---
+switch:
+  # Fyzické GPIO výstupy (zároveň slouží jako ruční odvzdušnění)
+  - platform: gpio
+    pin: GPIO25
+    id: pump1_relay
+    name: "Čerpadlo 1 - Ručně"
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: GPIO26
+    id: pump2_relay
+    name: "Čerpadlo 2 - Ručně"
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: GPIO27
+    id: pump3_relay
+    name: "Čerpadlo 3 - Ručně"
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: GPIO33
+    id: pump4_relay
+    name: "Čerpadlo 4 - Ručně"
+    restore_mode: ALWAYS_OFF
+
+  # Povolení automatického hnojení
+  - platform: template
+    id: pump1_auto
+    name: "Čerpadlo 1 - Automatika"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: template
+    id: pump2_auto
+    name: "Čerpadlo 2 - Automatika"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: template
+    id: pump3_auto
+    name: "Čerpadlo 3 - Automatika"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: template
+    id: pump4_auto
+    name: "Čerpadlo 4 - Automatika"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# --- NASTAVENÍ ČASU V HA ---
+datetime:
+  - platform: template
+    id: pump1_time
+    name: "Čerpadlo 1 - Čas"
+    type: time
+    optimistic: true
+    restore_value: true
+    initial_value: "08:00:00"
+
+  - platform: template
+    id: pump2_time
+    name: "Čerpadlo 2 - Čas"
+    type: time
+    optimistic: true
+    restore_value: true
+    initial_value: "08:05:00"
+
+  - platform: template
+    id: pump3_time
+    name: "Čerpadlo 3 - Čas"
+    type: time
+    optimistic: true
+    restore_value: true
+    initial_value: "08:10:00"
+
+  - platform: template
+    id: pump4_time
+    name: "Čerpadlo 4 - Čas"
+    type: time
+    optimistic: true
+    restore_value: true
+    initial_value: "08:15:00"
+
+# --- DÁVKA A KALIBRACE V ML ---
+number:
+  # Čerpadlo 1
+  - platform: template
+    id: pump1_dose
+    name: "Čerpadlo 1 - Dávka"
+    min_value: 0
+    max_value: 100
+    step: 0.5
+    unit_of_measurement: "ml"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 5.0
+
+  - platform: template
+    id: pump1_calib
+    name: "Čerpadlo 1 - Kalibrace (ml/10s)"
+    min_value: 1.0
+    max_value: 100.0
+    step: 0.1
+    unit_of_measurement: "ml"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 15.0
+
+  # Čerpadlo 2
+  - platform: template
+    id: pump2_dose
+    name: "Čerpadlo 2 - Dávka"
+    min_value: 0
+    max_value: 100
+    step: 0.5
+    unit_of_measurement: "ml"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 5.0
+
+  - platform: template
+    id: pump2_calib
+    name: "Čerpadlo 2 - Kalibrace (ml/10s)"
+    min_value: 1.0
+    max_value: 100.0
+    step: 0.1
+    unit_of_measurement: "ml"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 15.0
+
+  # Čerpadlo 3
+  - platform: template
+    id: pump3_dose
+    name: "Čerpadlo 3 - Dávka"
+    min_value: 0
+    max_value: 100
+    step: 0.5
+    unit_of_measurement: "ml"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 5.0
+
+  - platform: template
+    id: pump3_calib
+    name: "Čerpadlo 3 - Kalibrace (ml/10s)"
+    min_value: 1.0
+    max_value: 100.0
+    step: 0.1
+    unit_of_measurement: "ml"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 15.0
+
+  # Čerpadlo 4
+  - platform: template
+    id: pump4_dose
+    name: "Čerpadlo 4 - Dávka"
+    min_value: 0
+    max_value: 100
+    step: 0.5
+    unit_of_measurement: "ml"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 5.0
+
+  - platform: template
+    id: pump4_calib
+    name: "Čerpadlo 4 - Kalibrace (ml/10s)"
+    min_value: 1.0
+    max_value: 100.0
+    step: 0.1
+    unit_of_measurement: "ml"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: 15.0
+
+# --- TLAČÍTKA PRO OKAMŽITOU DÁVKU A KALIBRACI ---
+button:
+  # Čerpadlo 1
+  - platform: template
+    name: "Čerpadlo 1 - Dávkovat teď"
+    on_press:
+      - script.execute: dose_pump_1
+  - platform: template
+    name: "Čerpadlo 1 - Kalibrace (10s)"
+    on_press:
+      - switch.turn_on: pump1_relay
+      - delay: 10s
+      - switch.turn_off: pump1_relay
+
+  # Čerpadlo 2
+  - platform: template
+    name: "Čerpadlo 2 - Dávkovat teď"
+    on_press:
+      - script.execute: dose_pump_2
+  - platform: template
+    name: "Čerpadlo 2 - Kalibrace (10s)"
+    on_press:
+      - switch.turn_on: pump2_relay
+      - delay: 10s
+      - switch.turn_off: pump2_relay
+
+  # Čerpadlo 3
+  - platform: template
+    name: "Čerpadlo 3 - Dávkovat teď"
+    on_press:
+      - script.execute: dose_pump_3
+  - platform: template
+    name: "Čerpadlo 3 - Kalibrace (10s)"
+    on_press:
+      - switch.turn_on: pump3_relay
+      - delay: 10s
+      - switch.turn_off: pump3_relay
+
+  # Čerpadlo 4
+  - platform: template
+    name: "Čerpadlo 4 - Dávkovat teď"
+    on_press:
+      - script.execute: dose_pump_4
+  - platform: template
+    name: "Čerpadlo 4 - Kalibrace (10s)"
+    on_press:
+      - switch.turn_on: pump4_relay
+      - delay: 10s
+      - switch.turn_off: pump4_relay
