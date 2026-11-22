@@ -55,3 +55,58 @@ Kompletní open-source 4kanálová automatická dávkovací stanice pro akvária
 ---
 
 ## 🔌 Wiring / Zapojení
+
+[12V Power Adapter] ---> [DC Barrel Jack]
+|
++---> [MOSFET Module (Power IN)]
+|
++---> [Step-Down Converter (12V -> 5V)] ---> [ESP32 VIN + GND]
+Code
+
+### Pinout:
+- **MOSFET Driver Inputs (Pumps):**
+  - Pump 1 / Čerpadlo 1 -> **GPIO 25**
+  - Pump 2 / Čerpadlo 2 -> **GPIO 26**
+  - Pump 3 / Čerpadlo 3 -> **GPIO 27**
+  - Pump 4 / Čerpadlo 4 -> **GPIO 33**
+- **OLED Display (SSD1306 I2C):**
+  - SDA -> **GPIO 21**
+  - SCL -> **GPIO 22**
+  - VCC -> **3.3V**, GND -> **GND**
+
+---
+
+## ⚖️ Calibration / Kalibrace
+
+### 🇬🇧 English
+The system uses a quick, accurate 10-second calibration routine directly in Home Assistant:
+1. Place the output tube of the selected pump into a measuring cylinder or a syringe.
+2. In Home Assistant, press the **"Pump X - Calibration (10s)"** button.
+3. The pump will run for exactly 10 seconds.
+4. Measure the delivered liquid volume in ml and enter this number into **"Pump X - Calibration (ml/10s)"**.
+5. ESP32 automatically calculates the exact runtime for any target dose.
+
+### 🇨🇿 Čeština
+Systém využívá jednoduchou a přesnou 10sekundovou kalibraci přímo z Home Assistantu:
+1. Výstupní hadičku kalibrovaného čerpadla vložte do odměrného válce nebo injekční stříkačky.
+2. V Home Assistantu stiskněte tlačítko **„Čerpadlo X - Kalibrace (10s)“**.
+3. Čerpadlo poběží přesně 10 vteřin.
+4. Změřte, kolik ml reálně nateklo, a tuto hodnotu zadejte do pole **„Čerpadlo X - Kalibrace (ml/10s)“**.
+5. ESP32 si automaticky přepočítá přesný čas běhu pro jakoukoliv zadanou dávku v ml.
+
+---
+
+## ☕ Support / Podpora
+
+If you like this project and it saved you time or money on expensive commercial dosing units, consider supporting my work!
+
+Pokud se vám projekt líbí a ušetřil vám čas nebo peníze za drahý komerční dávkovač, můžete mě podpořit přes Buy Me a Coffee nebo PayPal!
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/honza192)
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=V2MTQCG9UFBUS&no_recurring=1&currency_code=CZK)
+
+---
+
+## 📜 License / Licence
+Distributed under the **MIT License**. You are free to modify, build, and share this project.  
+Tento projekt je šířen pod licencí **MIT**. Můžete jej volně upravovat, stavět a šířit.
