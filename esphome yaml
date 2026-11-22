@@ -20,15 +20,15 @@ logger:
 
 api:
   encryption:
-    key: "your_key"
+    key: "GENERATE_YOUR_OWN_KEY" # Vygenerujte si vlastní v ESPHome
 
 ota:
   - platform: esphome
 
 wifi:
   id: wifi_comp
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  wifi_ssid: "Vase_Domaci_WiFi"
+  wifi_password: "Vase_Silne_Heslo"
   ap:
     ssid: Akva-Hnojeni-Fallback
     password: tvoje_heslo
